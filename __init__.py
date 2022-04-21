@@ -56,4 +56,5 @@ class AllTags(Resource):
     def get(self):
         return getAllTags()
 
-app.run()
+if __name__ == "__main__":
+    app.run()
