@@ -2,5 +2,5 @@
 .gz
 .xlsx
 
-api/
 env/
+__pycache__/
