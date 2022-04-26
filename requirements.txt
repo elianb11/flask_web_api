@@ -4,3 +4,5 @@ flask_restplus
 flask_cors
 mysql-connector-python
 pandas
+scipy
+numpy

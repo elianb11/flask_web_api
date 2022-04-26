@@ -2,4 +2,6 @@
 .gz
 .xlsx
 
+env/
+__pycache__/
 api/

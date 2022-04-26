@@ -1,3 +1,4 @@
+from email.policy import default
 import werkzeug # pip install werkzeug==2.0.3
 werkzeug.cached_property = werkzeug.utils.cached_property
 import flask.scaffold
@@ -6,6 +7,7 @@ flask.helpers._endpoint_from_view_func = flask.scaffold._endpoint_from_view_func
 # main.py
 from flask import Flask, request
 from request_data import *
+from request_filter import *
 from flask_restplus import Api, Resource
 from flask_cors import CORS, cross_origin
 import json
@@ -55,6 +57,12 @@ class AuthoByBookId(Resource):
 class AllTags(Resource):
     def get(self):
         return getAllTags()
+
+@api.route('/apis/DS50/Filtering/<method>', defaults={'item': None})
+@api.route('/apis/DS50/Filtering/<method>/<item>')
+class Filtering(Resource):
+    def get(self, method, item):
+        return getReco(method=method, filter_base=int(item))
 
 if __name__ == "__main__":
     app.run()
