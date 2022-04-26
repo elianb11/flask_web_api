@@ -10,12 +10,12 @@ def getConnectionFromServer():
         password='AVNS_4ybSd0CoPKnCL5F',
         port = '25060')
 
-def fillDataframeNulls(df):
+def fillDataframeNulls(df: pd.DataFrame):
     for col in df.columns:
         if df[col].dtype == object:
-            df[col].fillna('')
+            df[col].fillna('', inplace=True)
         else:
-            df[col].fillna(0)
+            df[col].fillna(0, inplace=True)
     return df
 
 def getFirst1000Books():
