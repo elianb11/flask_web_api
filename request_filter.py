@@ -1,4 +1,5 @@
 from filtering import ContentBasedFiltering
+from request_data import fillDataframeNulls
 
 import mysql.connector
 from mysql.connector import Error
@@ -36,8 +37,6 @@ def getReco(method='content', filter_base=None):
             book_id IN {str(reco).replace('[','(').replace(']',')')}
     """
 
-    if connection.is_connected():
-        df = pd.read_sql(query, connection)
-        connection.close()
-
+    df = pd.read_sql(query, connection)
+    df = fillDataframeNulls(df)
     return df.to_dict('records')
