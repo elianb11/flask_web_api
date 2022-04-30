@@ -38,6 +38,11 @@ class First1000BooksByTag(Resource):
     def get(self, tag_name):
         return getFirst1000BooksByTag(tag_name)
 
+@api.route('/apis/DS50/Book/First1000/search=<search_text>')
+class First1000BooksBySearch(Resource):
+    def get(self, search_text):
+        return getFirst1000BooksBySearch(search_text)
+
 @api.route('/apis/DS50/Book/book_id=<book_id>')
 class BookByBookId(Resource):
     def get(self, book_id):

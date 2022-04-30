@@ -20,7 +20,31 @@ def fillDataframeNulls(df: pd.DataFrame):
 
 def getFirst1000Books():
     connection = getConnectionFromServer()
-    df = pd.read_sql("SELECT * FROM BOOK LIMIT 1000;", connection)
+    df = pd.read_sql("SELECT * FROM BOOK WHERE LANGUAGE_CODE LIKE 'en%' LIMIT 1000;", connection)
+    df = fillDataframeNulls(df)
+    return df.to_dict('records')
+
+def getFirst1000BooksBySearch(search_text):
+    connection = getConnectionFromServer()
+    df = pd.read_sql(
+        """SELECT
+            DISTINCT B.*
+        FROM
+            BOOK B INNER JOIN WROTE W
+                ON B.BOOK_ID = W.BOOK_ID
+            INNER JOIN AUTHOR A
+                ON A.AUTHOR_ID = W.AUTHOR_ID
+        WHERE
+            B.LANGUAGE_CODE LIKE 'en%'
+        AND (
+                UPPER(B.TITLE) LIKE '%"""+ search_text.upper() +"""%'
+            OR
+                UPPER(A.NAME) LIKE '%"""+ search_text.upper() +"""%'
+            )
+        ORDER BY
+            B.RATINGS_COUNT DESC
+        LIMIT 1000;"""
+        , connection)
     df = fillDataframeNulls(df)
     return df.to_dict('records')
 
@@ -61,12 +85,16 @@ def getFirst1000BooksByTag(tag_name):
     connection = getConnectionFromServer()
     df = pd.read_sql(
         """SELECT
-            B.*
+            DISTINCT B.*
         FROM
             BOOK B INNER JOIN TAG T
                 ON B.BOOK_ID = T.BOOK_ID
         WHERE
+            B.LANGUAGE_CODE LIKE 'en%'
+        AND
             T.TAG_NAME = '"""+ str(tag_name) +"""'
+        ORDER BY
+            B.RATINGS_COUNT DESC
         LIMIT 1000;"""
         , connection)
     df = fillDataframeNulls(df)
@@ -76,7 +104,7 @@ def getBooksFromSameSerie(book_id):
     connection = getConnectionFromServer()
     df = pd.read_sql(
         """SELECT
-            B.*
+            DISTINCT B.*
         FROM
             BOOK B INNER JOIN CONTAINS C
                 ON B.BOOK_ID = C.BOOK_ID
@@ -91,6 +119,10 @@ def getBooksFromSameSerie(book_id):
                     C.BOOK_ID = """+ str(book_id) +"""
                 LIMIT 1
                 )
+            AND
+                B.LANGUAGE_CODE LIKE 'en%'
+        ORDER BY
+            B.RATINGS_COUNT DESC
         ;"""
         , connection)
     df = fillDataframeNulls(df)
