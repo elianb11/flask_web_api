@@ -12,12 +12,16 @@ TAGS = ['fiction', 'fantasy', 'romance', 'classic', 'mystery', 'kindle', 'sci-fi
 pd.options.mode.chained_assignment = None
 
 # Encodes processed_data that need to be encoded according one book
+
+
 def encodeLabels(df, book_id, columns):
     for col in columns:
         df[col] = (df[col] == df.loc[book_id, col]).astype(float)
     return df
 
 # Get similarity rates
+
+
 def getSim(array1, array2, method='cos'):
     if method == 'cos':
         return sp_dist.cosine(array1, array2)
@@ -117,7 +121,6 @@ class ContentBasedFiltering(Filtering):
         to_encode = ['author_id', 'publisher', 'format']
         self.process = encodeLabels(self.process, self.filter_base, to_encode)
 
-
     def getBestRecommendations(self, book_id, data, top=10, method='cos'):
 
         reco = {}
@@ -136,23 +139,23 @@ class ContentBasedFiltering(Filtering):
 
         return [book_id for book_id, _ in reco[:top]]
 
-
     def filter(self, top=10, discover=False):
 
         query = f"""
             SELECT
-                T.book_id
-                ,T.tag_name
-                ,T.tag_count / SUM(T.tag_count) OVER(PARTITION BY T.book_id) AS "perc"
+                TGD.book_id
+                ,TAG.name
+                ,TGD.count / SUM(TGD.count) OVER(PARTITION BY TGD.book_id) AS "perc"
             FROM
-                TAG T
+                TAGGED TGD INNER JOIN TAG TAG
+                    ON TGD.tag_id = TAG.tag_id
             WHERE
-                T.book_id IN {str(self.process.index.tolist()).replace('[','(').replace(']',')')}
+                TGD.book_id IN {str(self.process.index.tolist()).replace('[','(').replace(']',')')}
         """
 
         if self.connection.is_connected():
             tag = pd.read_sql(query, self.connection).pivot_table(
-                index='book_id', columns='tag_name', values='perc').fillna(0)
+                index='book_id', columns='name', values='perc').fillna(0)
 
         final_data = self.process.merge(
             tag, how='inner', left_index=True, right_index=True)
@@ -190,30 +193,33 @@ class CollabFiltering(Filtering):
         self.data = df
 
     def processData(self):
-        means = self.data.groupby(['user_id'], as_index=False, sort=False).mean().rename(columns={'rating': 'mean_rating'})
+        means = self.data.groupby(['user_id'], as_index=False, sort=False).mean(
+        ).rename(columns={'rating': 'mean_rating'})
         means.drop(columns=['book_id'], inplace=True)
-        self.data = self.data.merge(means, on='user_id', how='left', sort=False)
-        self.data['adjusted_rating'] = self.data['rating'] - self.data['mean_rating']
-        self.process = self.data.pivot_table(index='user_id', columns='book_id', values='adjusted_rating').fillna(0)
+        self.data = self.data.merge(
+            means, on='user_id', how='left', sort=False)
+        self.data['adjusted_rating'] = self.data['rating'] - \
+            self.data['mean_rating']
+        self.process = self.data.pivot_table(
+            index='user_id', columns='book_id', values='adjusted_rating').fillna(0)
 
-    
     def getBestRecommendations(self, df, top=10):
         reco = []
         sumsim = df['sim'].sum()
         for book_id in df.columns[:-1]:
             df[book_id] = df[book_id]*df['sim']
-            reco.append((book_id,sum(df[book_id].tolist())/sumsim))
-        reco.sort(key= lambda x: x[1], reverse=True)
+            reco.append((book_id, sum(df[book_id].tolist())/sumsim))
+        reco.sort(key=lambda x: x[1], reverse=True)
         return reco[:top]
-
 
     def filter(self, top=10):
         initial_user = (self.filter_base, self.process.loc[self.filter_base])
-        users = [(index, value) for index, value in zip(self.process.index, self.process.values) if index != self.filter_base]
-        sim_users  = getSimUsers(initial_user, users, top=top, method='pea')
+        users = [(index, value) for index, value in zip(
+            self.process.index, self.process.values) if index != self.filter_base]
+        sim_users = getSimUsers(initial_user, users, top=top, method='pea')
 
-        self.process = self.process.loc[[user for user,_ in sim_users],:]
-        self.process['sim'] = [sim for _,sim in sim_users]
+        self.process = self.process.loc[[user for user, _ in sim_users], :]
+        self.process['sim'] = [sim for _, sim in sim_users]
 
         reco = self.getBestRecommendations(self.process, top=top)
         print(reco)
@@ -229,7 +235,6 @@ if __name__ == '__main__':
         password='AVNS_4ybSd0CoPKnCL5F',
         port='25060'
     )
-    
     filtering = ContentBasedFiltering()
     filtering.setFilterBase(filter_base=27421523)
     filtering.setConnection(connection)
@@ -244,15 +249,4 @@ if __name__ == '__main__':
     filtering.processData()
     print(filtering.process)
     filtering.filter()
-    query = f"""
-        SELECT
-            *
-        FROM
-            USER
-        ;
-    """
-    if connection.is_connected():
-        df = pd.read_sql(query, connection)
-
-    print(df.head())
     '''
