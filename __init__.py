@@ -54,7 +54,7 @@ class BooksFromSameSerie(Resource):
         return getBooksFromSameSerie(book_id)
 
 @api.route('/apis/DS50/Author/book_id=<book_id>')
-class AuthoByBookId(Resource):
+class AuthorByBookId(Resource):
     def get(self, book_id):
         return getAuthorByBookId(book_id)
 
