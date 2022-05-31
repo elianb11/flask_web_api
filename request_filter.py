@@ -1,4 +1,4 @@
-from filtering import ContentBasedFiltering
+from filtering import ContentBasedFiltering, CollabFiltering, getNumberReview, getPopularReco
 from request_data import fillDataframeNulls
 
 import mysql.connector
@@ -24,9 +24,22 @@ def getReco(method='content', filter_base=None):
         filtering.processData()
         reco = filtering.filter()
     
-    if method == 'collab':
-        #TODO Add collaborative filtering
-        pass
+    if method == 'collab' and filter_base:
+
+        #MINIMUM_RECQUIRED = 5
+        #nb_review = getNumberReview(filter_base, connection)
+
+        #if nb_review < MINIMUM_RECQUIRED:
+        if True:
+            filtering = CollabFiltering()
+            filtering.setFilterBase(filter_base)
+            filtering.setConnection(connection)
+            filtering.loadData()
+            filtering.processData()
+            filtering.filter()
+            reco = filtering.filter()
+        else:
+            reco = getPopularReco(filter_base, connection)
 
     query = f"""
         SELECT

@@ -4,24 +4,82 @@ from mysql.connector import Error
 import numpy as np
 from scipy.spatial import distance as sp_dist
 
+"""
 TAGS = ['fiction', 'fantasy', 'romance', 'classic', 'mystery', 'kindle', 'sci-fi', 'literature',
         'horror', 'contemporary', 'adventure', 'historical', 'adult', 'paranormal',
         'thriller', 'history', 'dystopia', 'audio', 'children', 'school', 'philosophy', 'novel', 'young'
         ]
+"""
 
 pd.options.mode.chained_assignment = None
 
+
+# Return a user favorite tags
+def getFavoriteTags(user_mail, connection):
+    query = f"""
+        SELECT
+            first_fav_category
+            ,second_fav_category
+            ,third_fav_category
+        FROM
+            USER
+        WHERE
+            mail = '{user_mail}'
+    """
+
+    if connection.is_connected():
+        df = pd.read_sql(query, connection)
+
+    return df.loc[0].tolist()
+
+
+# Return the most popular books according to the user preferences
+def getPopularReco(user_mail, connection):
+
+    favorite_tags = getFavoriteTags(user_mail, connection)
+
+    query = f"""
+        SELECT
+            book_id
+        FROM
+            BOOK B INNER JOIN TAGGED TG
+                ON B.book_id = TG.book_id
+            INNER JOIN TAG TA
+                ON TG.tag_id = TA.tag_id
+        ORDER BY
+            
+        LIMIT 5 
+    """
+
+    if connection.is_connected():
+        df = pd.read_sql(query, connection)
+
+# Return the number of reviews of a given user
+def getNumberReview(user_mail, connection):
+    query = f"""
+        SELECT
+            COUNT(*) AS NB
+        FROM
+            USER U INNER JOIN REVIEW R
+                ON U.user_id = R.user_id
+        WHERE
+            U.mail = '{user_mail}'
+    """
+
+    if connection.is_connected():
+        df = pd.read_sql(query, connection)
+
+    return df['NB'][0]
+
+
 # Encodes processed_data that need to be encoded according one book
-
-
 def encodeLabels(df, book_id, columns):
     for col in columns:
         df[col] = (df[col] == df.loc[book_id, col]).astype(float)
     return df
 
+
 # Get similarity rates
-
-
 def getSim(array1, array2, method='cos'):
     if method == 'cos':
         return sp_dist.cosine(array1, array2)
@@ -139,7 +197,7 @@ class ContentBasedFiltering(Filtering):
 
         return [book_id for book_id, _ in reco[:top]]
 
-    def filter(self, top=10, discover=False):
+    def filter(self, top=10):
 
         query = f"""
             SELECT
@@ -172,6 +230,20 @@ class CollabFiltering(Filtering):
         query = f"""
             SELECT
                 user_id
+            FROM
+                USER
+            WHERE
+                mail = '{self.filter_base}'
+        """
+
+        if self.connection.is_connected():
+            df = pd.read_sql(query, self.connection)
+
+        self.filter_base = df['user_id'][0]
+
+        query = f"""
+            SELECT
+                user_id
                 ,book_id
                 ,rating
             FROM
@@ -192,16 +264,13 @@ class CollabFiltering(Filtering):
 
         self.data = df
 
+
     def processData(self):
-        means = self.data.groupby(['user_id'], as_index=False, sort=False).mean(
-        ).rename(columns={'rating': 'mean_rating'})
+        means = self.data.groupby(['user_id'], as_index=False, sort=False).mean().rename(columns={'rating': 'mean_rating'})
         means.drop(columns=['book_id'], inplace=True)
-        self.data = self.data.merge(
-            means, on='user_id', how='left', sort=False)
-        self.data['adjusted_rating'] = self.data['rating'] - \
-            self.data['mean_rating']
-        self.process = self.data.pivot_table(
-            index='user_id', columns='book_id', values='adjusted_rating').fillna(0)
+        self.data = self.data.merge(means, on='user_id', how='left', sort=False)
+        self.data['adjusted_rating'] = self.data['rating'] - self.data['mean_rating']
+        self.process = self.data.pivot_table(index='user_id', columns='book_id', values='adjusted_rating').fillna(0)
 
     def getBestRecommendations(self, df, top=10):
         reco = []
@@ -214,8 +283,7 @@ class CollabFiltering(Filtering):
 
     def filter(self, top=10):
         initial_user = (self.filter_base, self.process.loc[self.filter_base])
-        users = [(index, value) for index, value in zip(
-            self.process.index, self.process.values) if index != self.filter_base]
+        users = [(index, value) for index, value in zip(self.process.index, self.process.values) if index != self.filter_base]
         sim_users = getSimUsers(initial_user, users, top=top, method='pea')
 
         self.process = self.process.loc[[user for user, _ in sim_users], :]
@@ -235,18 +303,23 @@ if __name__ == '__main__':
         password='AVNS_4ybSd0CoPKnCL5F',
         port='25060'
     )
+
+    # test mail : rjohnson@gmail.com
+    #print(getNumberReview('rjohnson@gmail.com', connection))
+    #print(getFavoriteTags('rjohnson@gmail.com', connection))
+
+    '''
     filtering = ContentBasedFiltering()
     filtering.setFilterBase(filter_base=27421523)
     filtering.setConnection(connection)
     filtering.loadData()
     filtering.processData()
     print(filtering.filter())
-    '''
+
     filtering = CollabFiltering()
-    filtering.setFilterBase(filter_base=0)
+    filtering.setFilterBase(filter_base='rjohnson@gmail.com')
     filtering.setConnection(connection)
     filtering.loadData()
     filtering.processData()
-    print(filtering.process)
-    filtering.filter()
+    print(filtering.filter())
     '''
