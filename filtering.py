@@ -107,7 +107,6 @@ def getSimUsers(initial_user, users, method='cos'):
     for user in users:
         score = getSim(initial_user[1], user[1], method)
         sim.append((user[0], score))
-    sim.sort(key=lambda x: x[1], reverse=True)
     return sim
 
 
@@ -271,6 +270,7 @@ class CollabFiltering(Filtering):
         if self.connection.is_connected():
             same_read_df = pd.read_sql(query2, self.connection)
 
+        print("\nBook rated in common between users:")
         print(same_read_df)
 
         query3=f"""
@@ -300,6 +300,7 @@ class CollabFiltering(Filtering):
         if self.connection.is_connected():
             df = pd.read_sql(query3, self.connection)
 
+        print("\nAll ratings:")
         print(df)
 
         self.data = df
@@ -308,9 +309,15 @@ class CollabFiltering(Filtering):
     def processData(self):
         means = self.data.groupby(['user_id'], as_index=False, sort=False).mean().rename(columns={'rating': 'mean_rating'})
         means.drop(columns=['book_id'], inplace=True)
+        print("\nRate means:")
+        print(means)
         self.data = self.data.merge(means, on='user_id', how='left', sort=False)
         self.data['adjusted_rating'] = self.data['rating'] - self.data['mean_rating']
+        print("\nAdjusted ratings:")
+        print(self.data)
         self.process = self.data.pivot_table(index='user_id', columns='book_id', values='adjusted_rating').fillna(0)
+        print("\nPivot table User_id/Book_id:")
+        print(self.process)
 
     def getBestRecommendations(self, df, top=10):
         reco = []
@@ -323,20 +330,26 @@ class CollabFiltering(Filtering):
 
     def filter(self, top=10):
         initial_user = (self.filter_base, self.process.loc[self.filter_base])
-        users = [(index, value) for index, value in zip(
-            self.process.index, self.process.values) if index != self.filter_base]
+        print("\nInitial user:")
+        print(initial_user)
+        users = [(index, value) for index, value in zip(self.process.index, self.process.values) if index != self.filter_base]
+        print("\nOther users:")
+        print(users)
         sim_users = getSimUsers(initial_user, users, method='pea')
 
-        self.process = self.process.loc[[user for user, _ in sim_users], :]
+        self.process.drop(index=[self.filter_base], inplace=True)
         self.process['sim'] = [sim for _, sim in sim_users]
+        print("\nMatrix with sim:")
         print(self.process)
 
         reco = self.getBestRecommendations(self.process, top=top)
+        print("\nRecommendations:")
         print(reco)
 
         return [book_id for book_id, _ in reco]
 
-
+#TESTING
+'''
 if __name__ == '__main__':
     connection = mysql.connector.connect(
         host='ds50-mysql-do-user-9644544-0.b.db.ondigitalocean.com',
@@ -350,14 +363,13 @@ if __name__ == '__main__':
     #print(getNumberReview('aadams18@hotmail.com', connection))
     #print(getFavoriteTags('aadams18@hotmail.com', connection))
 
-    '''
     filtering = ContentBasedFiltering()
     filtering.setFilterBase(filter_base=27421523)
     filtering.setConnection(connection)
     filtering.loadData()
     filtering.processData()
     print(filtering.filter())
-    
+
     filtering = CollabFiltering()
     filtering.setFilterBase(filter_base='aadams18@hotmail.com')
     filtering.setConnection(connection)
