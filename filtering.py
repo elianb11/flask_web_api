@@ -243,32 +243,24 @@ class CollabFiltering(Filtering):
 
         self.filter_base = user_id_df['user_id'][0]
 
-        print(self.filter_base)
 
         query2=f"""
             SELECT
-                U.user_id
-                ,(SELECT
-                    COUNT(*)
-                FROM
-                    (SELECT
-                        R1.book_id
-                    FROM
-                        REVIEW R1
-                    WHERE
-                        R1.user_id = {self.filter_base}
-                    AND
-                        R1.book_id IN (SELECT
-                                        R2.book_id
-                                    FROM
-                                        REVIEW R2
-                                    WHERE
-                                        R2.user_id = U.user_id
-                                    )
-                    ) D
-                ) AS 'NB'
+                I_OTHER.user_id
+                ,COUNT(DISTINCT I_OTHER.book_id) "NB"
             FROM
-                USER U
+                USER U INNER JOIN INTERACTION I_SELF
+                    ON U.user_id = I_SELF.user_id
+                INNER JOIN INTERACTION I_OTHER
+                    ON I_SELF.book_id = I_OTHER.book_id
+            WHERE
+                I_SELF.rating != 0
+            AND
+                U.user_id = {self.filter_base}
+            AND
+                I_OTHER.user_id != {self.filter_base}
+            GROUP BY
+                I_OTHER.user_id
             HAVING
                 NB > 0
             ORDER BY
@@ -287,18 +279,22 @@ class CollabFiltering(Filtering):
                 ,book_id
                 ,rating
             FROM
-                REVIEW
+                INTERACTION
             WHERE
                 user_id = {self.filter_base}
+            AND
+                rating != 0
             UNION
             SELECT
                 user_id
                 ,book_id
                 ,rating
             FROM
-                REVIEW
+                INTERACTION
             WHERE
                 user_id IN {str(same_read_df['user_id'].tolist()).replace('[','(').replace(']',')')}
+            AND
+                rating != 0
         """
 
         if self.connection.is_connected():
@@ -307,6 +303,7 @@ class CollabFiltering(Filtering):
         print(df)
 
         self.data = df
+
 
     def processData(self):
         means = self.data.groupby(['user_id'], as_index=False, sort=False).mean().rename(columns={'rating': 'mean_rating'})
@@ -325,7 +322,6 @@ class CollabFiltering(Filtering):
         return reco[:top]
 
     def filter(self, top=10):
-        print(self.process)
         initial_user = (self.filter_base, self.process.loc[self.filter_base])
         users = [(index, value) for index, value in zip(
             self.process.index, self.process.values) if index != self.filter_base]
@@ -361,11 +357,29 @@ if __name__ == '__main__':
     filtering.loadData()
     filtering.processData()
     print(filtering.filter())
-    '''
-
+    
     filtering = CollabFiltering()
     filtering.setFilterBase(filter_base='aadams18@hotmail.com')
     filtering.setConnection(connection)
     filtering.loadData()
     filtering.processData()
     print(filtering.filter())
+
+    cursor = connection.cursor()
+    query = f"""
+        ALTER TABLE REVIEW ADD INDEX (user_id);
+    """
+
+    cursor.execute(query)
+
+    query = f"""
+        ALTER TABLE REVIEW ADD INDEX (book_id);
+    """
+
+    cursor.execute(query)
+
+    connection.commit()
+
+    cursor.close()
+    connection.close()
+    '''
