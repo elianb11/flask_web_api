@@ -55,6 +55,8 @@ def getPopularReco(user_mail, connection):
         df = pd.read_sql(query, connection)
 
 # Return the number of reviews of a given user
+
+
 def getNumberReview(user_mail, connection):
     query = f"""
         SELECT
@@ -100,13 +102,13 @@ def getSim(array1, array2, method='cos'):
             return num/denom
 
 
-def getSimUsers(initial_user, users, top=10, method='cos'):
+def getSimUsers(initial_user, users, method='cos'):
     sim = []
     for user in users:
         score = getSim(initial_user[1], user[1], method)
         sim.append((user[0], score))
     sim.sort(key=lambda x: x[1], reverse=True)
-    return sim[:top]
+    return sim
 
 
 class Filtering:
@@ -226,8 +228,8 @@ class CollabFiltering(Filtering):
     def __init__(self, filter_base=None):
         super().__init__(filter_base=filter_base)
 
-    def loadData(self, top=10000):
-        query = f"""
+    def loadData(self, top=50):
+        query1 = f"""
             SELECT
                 user_id
             FROM
@@ -237,11 +239,49 @@ class CollabFiltering(Filtering):
         """
 
         if self.connection.is_connected():
-            df = pd.read_sql(query, self.connection)
+            user_id_df = pd.read_sql(query1, self.connection)
 
-        self.filter_base = df['user_id'][0]
+        self.filter_base = user_id_df['user_id'][0]
 
-        query = f"""
+        print(self.filter_base)
+
+        query2=f"""
+            SELECT
+                U.user_id
+                ,(SELECT
+                    COUNT(*)
+                FROM
+                    (SELECT
+                        R1.book_id
+                    FROM
+                        REVIEW R1
+                    WHERE
+                        R1.user_id = {self.filter_base}
+                    AND
+                        R1.book_id IN (SELECT
+                                        R2.book_id
+                                    FROM
+                                        REVIEW R2
+                                    WHERE
+                                        R2.user_id = U.user_id
+                                    )
+                    ) D
+                ) AS 'NB'
+            FROM
+                USER U
+            HAVING
+                NB > 0
+            ORDER BY
+                2 DESC
+            LIMIT {top+1}
+        """
+
+        if self.connection.is_connected():
+            same_read_df = pd.read_sql(query2, self.connection)
+
+        print(same_read_df)
+
+        query3=f"""
             SELECT
                 user_id
                 ,book_id
@@ -257,13 +297,16 @@ class CollabFiltering(Filtering):
                 ,rating
             FROM
                 REVIEW
-            LIMIT {top}
+            WHERE
+                user_id IN {str(same_read_df['user_id'].tolist()).replace('[','(').replace(']',')')}
         """
+
         if self.connection.is_connected():
-            df = pd.read_sql(query, self.connection)
+            df = pd.read_sql(query3, self.connection)
+
+        print(df)
 
         self.data = df
-
 
     def processData(self):
         means = self.data.groupby(['user_id'], as_index=False, sort=False).mean().rename(columns={'rating': 'mean_rating'})
@@ -282,12 +325,15 @@ class CollabFiltering(Filtering):
         return reco[:top]
 
     def filter(self, top=10):
+        print(self.process)
         initial_user = (self.filter_base, self.process.loc[self.filter_base])
-        users = [(index, value) for index, value in zip(self.process.index, self.process.values) if index != self.filter_base]
-        sim_users = getSimUsers(initial_user, users, top=top, method='pea')
+        users = [(index, value) for index, value in zip(
+            self.process.index, self.process.values) if index != self.filter_base]
+        sim_users = getSimUsers(initial_user, users, method='pea')
 
         self.process = self.process.loc[[user for user, _ in sim_users], :]
         self.process['sim'] = [sim for _, sim in sim_users]
+        print(self.process)
 
         reco = self.getBestRecommendations(self.process, top=top)
         print(reco)
@@ -305,8 +351,8 @@ if __name__ == '__main__':
     )
 
     # test mail : rjohnson@gmail.com
-    #print(getNumberReview('rjohnson@gmail.com', connection))
-    #print(getFavoriteTags('rjohnson@gmail.com', connection))
+    #print(getNumberReview('aadams18@hotmail.com', connection))
+    #print(getFavoriteTags('aadams18@hotmail.com', connection))
 
     '''
     filtering = ContentBasedFiltering()
@@ -315,11 +361,11 @@ if __name__ == '__main__':
     filtering.loadData()
     filtering.processData()
     print(filtering.filter())
+    '''
 
     filtering = CollabFiltering()
-    filtering.setFilterBase(filter_base='rjohnson@gmail.com')
+    filtering.setFilterBase(filter_base='aadams18@hotmail.com')
     filtering.setConnection(connection)
     filtering.loadData()
     filtering.processData()
     print(filtering.filter())
-    '''
