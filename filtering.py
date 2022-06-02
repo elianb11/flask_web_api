@@ -308,10 +308,9 @@ class CollabFiltering(Filtering):
 
     def getBestRecommendations(self, df, top=10):
         reco = []
-        sumsim = df['sim'].sum()
+        df["sim"] /= df["sim"].sum()
         for book_id in df.columns[:-1]:
-            df[book_id] = df[book_id]*df['sim']
-            reco.append((book_id, sum(df[book_id].tolist())/sumsim))
+            reco.append((book_id, (df[book_id] * df["sim"]).sum()))
         reco.sort(key=lambda x: x[1], reverse=True)
         return reco[:top]
 
