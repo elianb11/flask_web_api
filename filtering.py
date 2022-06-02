@@ -242,7 +242,6 @@ class CollabFiltering(Filtering):
 
         self.filter_base = user_id_df['user_id'][0]
 
-
         query2=f"""
             SELECT
                 I_OTHER.user_id
@@ -269,9 +268,6 @@ class CollabFiltering(Filtering):
 
         if self.connection.is_connected():
             same_read_df = pd.read_sql(query2, self.connection)
-
-        print("\nBook rated in common between users:")
-        print(same_read_df)
 
         query3=f"""
             SELECT
@@ -300,24 +296,15 @@ class CollabFiltering(Filtering):
         if self.connection.is_connected():
             df = pd.read_sql(query3, self.connection)
 
-        print("\nAll ratings:")
-        print(df)
-
         self.data = df
 
 
     def processData(self):
         means = self.data.groupby(['user_id'], as_index=False, sort=False).mean().rename(columns={'rating': 'mean_rating'})
         means.drop(columns=['book_id'], inplace=True)
-        print("\nRate means:")
-        print(means)
         self.data = self.data.merge(means, on='user_id', how='left', sort=False)
         self.data['adjusted_rating'] = self.data['rating'] - self.data['mean_rating']
-        print("\nAdjusted ratings:")
-        print(self.data)
         self.process = self.data.pivot_table(index='user_id', columns='book_id', values='adjusted_rating').fillna(0)
-        print("\nPivot table User_id/Book_id:")
-        print(self.process)
 
     def getBestRecommendations(self, df, top=10):
         reco = []
@@ -330,21 +317,14 @@ class CollabFiltering(Filtering):
 
     def filter(self, top=10):
         initial_user = (self.filter_base, self.process.loc[self.filter_base])
-        print("\nInitial user:")
-        print(initial_user)
         users = [(index, value) for index, value in zip(self.process.index, self.process.values) if index != self.filter_base]
-        print("\nOther users:")
-        print(users)
         sim_users = getSimUsers(initial_user, users, method='pea')
 
         self.process.drop(index=[self.filter_base], inplace=True)
         self.process['sim'] = [sim for _, sim in sim_users]
-        print("\nMatrix with sim:")
-        print(self.process)
 
         reco = self.getBestRecommendations(self.process, top=top)
-        print("\nRecommendations:")
-        print(reco)
+
 
         return [book_id for book_id, _ in reco]
 
@@ -371,27 +351,10 @@ if __name__ == '__main__':
     print(filtering.filter())
 
     filtering = CollabFiltering()
-    filtering.setFilterBase(filter_base='aadams18@hotmail.com')
+    filtering.setFilterBase(filter_base='aacevedo@gmail.com')
     filtering.setConnection(connection)
     filtering.loadData()
     filtering.processData()
     print(filtering.filter())
-
-    cursor = connection.cursor()
-    query = f"""
-        ALTER TABLE REVIEW ADD INDEX (user_id);
-    """
-
-    cursor.execute(query)
-
-    query = f"""
-        ALTER TABLE REVIEW ADD INDEX (book_id);
-    """
-
-    cursor.execute(query)
-
-    connection.commit()
-
-    cursor.close()
-    connection.close()
-    '''
+     '''
+    
