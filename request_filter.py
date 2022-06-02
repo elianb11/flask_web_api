@@ -17,6 +17,7 @@ def getReco(method='content', filter_base=None):
     connection = getConnectionFromServer()
 
     if method == 'content' and filter_base:
+        filter_base=int(filter_base)
         filtering = ContentBasedFiltering()
         filtering.setFilterBase(filter_base)
         filtering.setConnection(connection)
@@ -26,6 +27,7 @@ def getReco(method='content', filter_base=None):
     
     if method == 'collab' and filter_base:
 
+        filter_base=str(filter_base)
         #MINIMUM_RECQUIRED = 5
         #nb_review = getNumberReview(filter_base, connection)
 

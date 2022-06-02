@@ -67,7 +67,7 @@ class AllTags(Resource):
 @api.route('/apis/DS50/Filtering/<method>/<item>')
 class Filtering(Resource):
     def get(self, method, item):
-        return getReco(method=method, filter_base=int(item))
+        return getReco(method=method, filter_base=item)
 
 if __name__ == "__main__":
     app.run()
