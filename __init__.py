@@ -63,7 +63,6 @@ class AllTags(Resource):
     def get(self):
         return getAllTags()
 
-@api.route('/apis/DS50/Filtering/<method>', defaults={'item': None})
 @api.route('/apis/DS50/Filtering/<method>/<item>')
 class Filtering(Resource):
     def get(self, method, item):
