@@ -1,4 +1,5 @@
 from email.policy import default
+from bs4 import ResultSet
 import werkzeug # pip install werkzeug==2.0.3
 werkzeug.cached_property = werkzeug.utils.cached_property
 import flask.scaffold
@@ -8,7 +9,8 @@ flask.helpers._endpoint_from_view_func = flask.scaffold._endpoint_from_view_func
 from flask import Flask, request
 from request_data import *
 from request_filter import *
-from flask_restplus import Api, Resource
+from post_data import *
+from flask_restplus import Api, Resource, fields
 from flask_cors import CORS, cross_origin
 import json
 
@@ -27,6 +29,8 @@ api = Api(
     default_label="",
     endpoint="DS50 Project API/swagger.json"
 )
+
+ns_user = api.namespace('users', description='users operations')
 
 @api.route('/apis/DS50/Book/First1000')
 class First1000Books(Resource):
@@ -67,6 +71,31 @@ class AllTags(Resource):
 class Filtering(Resource):
     def get(self, method, item):
         return getReco(method=method, filter_base=item)
+
+@api.route('/apis/DS50/User/mail=<mail>')
+class User(Resource): 
+    def get(self, mail):
+        return getUserByMail(mail)
+
+@api.route('/apis/DS50/User')
+class User(Resource):
+    user_data = ns_user.model(
+    "user_data",
+    {
+        "first_name": fields.String(required=True),
+        "last_name": fields.String(required=True),
+        "username": fields.String(required=True),
+        "password": fields.String(required=True),
+        "mail": fields.String(required=True),
+        "address": fields.String(required=True),
+        "first_fav_category": fields.String(required=True),
+        "second_fav_category": fields.String(required=True),
+        "third_fav_category": fields.String(required=True),
+    },
+)
+    @ns_user.expect(user_data)
+    def post(self):
+        return postUser(request.get_json())
 
 if __name__ == "__main__":
     app.run()

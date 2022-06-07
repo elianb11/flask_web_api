@@ -1,6 +1,7 @@
 import mysql.connector
 from mysql.connector import Error
 import pandas as pd
+from datetime import datetime
 
 def getConnectionFromServer():
     return mysql.connector.connect(
@@ -84,8 +85,10 @@ def getFirst1000BooksByTag(tag_name):
         """SELECT
             DISTINCT B.*
         FROM
-            BOOK B INNER JOIN TAG T
-                ON B.BOOK_ID = T.BOOK_ID
+            BOOK B INNER JOIN TAGGED TGD
+                ON B.BOOK_ID = TGD.BOOK_ID
+            INNER JOIN TAG T
+                ON TGD.TAG_ID = T.TAG_ID
         WHERE
             T.TAG_NAME = '"""+ str(tag_name) +"""'
         ORDER BY
@@ -122,28 +125,42 @@ def getBooksFromSameSerie(book_id):
     return df.to_dict('records')
 
 def getAllTags():
-    return [
-        'fiction', 
-        'fantasy', 
-        'romance', 
-        'classic', 
-        'mystery', 
-        'kindle', 
-        'sci-fi', 
-        'literature', 
-        'horror', 
-        'contemporary', 
-        'adventure', 
-        'historical', 
-        'adult', 
-        'paranormal', 
-        'thriller', 
-        'history', 
-        'dystopia', 
-        'audio', 
-        'children', 
-        'school', 
-        'philosophy', 
-        'novel', 
-        'young'
-        ]
+    connection = getConnectionFromServer()
+    df = pd.read_sql(
+        """SELECT
+            *
+        FROM
+            TAG
+        ;"""
+        , connection)
+    df = fillDataframeNulls(df)
+    return df.to_dict('records')
+
+def getUserByMail(mail):
+    connection = getConnectionFromServer()
+    df = pd.read_sql(
+        """SELECT
+            *
+        FROM
+            USER
+        WHERE
+            mail = '"""+ mail +"""'
+        ;"""
+        , connection)
+    user = df.to_dict('records')[0]
+    user["sign_in_date"] = user["sign_in_date"].strftime("%d/%m/%Y")
+    return user
+
+def getDynamicNewUserID():
+    connection = getConnectionFromServer()
+    df = pd.read_sql(
+        """SELECT
+            user_id
+        FROM
+            USER
+        ORDER BY
+            user_id DESC
+        LIMIT 1
+        ;"""
+        , connection)
+    return str(df['user_id'][0] + 1)
