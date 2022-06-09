@@ -28,11 +28,10 @@ def getReco(method='content', filter_base=None):
         reco = filtering.filter()
 
     if method == 'collab' and filter_base:
-        #MINIMUM_RECQUIRED = 5
-        #nb_review = getNumberReview(filter_base, connection)
+        MINIMUM_RECQUIRED = 5
+        nb_review = getNumberReview(filter_base, connection)
 
-        # if nb_review < MINIMUM_RECQUIRED:
-        if True:
+        if nb_review < MINIMUM_RECQUIRED:
             filtering = CollabFiltering()
             filtering.setFilterBase(filter_base=filter_base)
             filtering.setConnection(connection)
@@ -53,4 +52,13 @@ def getReco(method='content', filter_base=None):
 
     df = pd.read_sql(query, connection)
     df = fillDataframeNulls(df)
-    return df.to_dict('records')
+    records = df.to_dict('records')
+
+    ordered_reco = []
+    for r in reco:
+        for item in records:
+            if r == item['book_id']:
+                ordered_reco.append(item)
+                break
+
+    return ordered_reco
