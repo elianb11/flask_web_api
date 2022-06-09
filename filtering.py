@@ -4,12 +4,6 @@ from mysql.connector import Error
 import numpy as np
 from scipy.spatial import distance as sp_dist
 
-"""
-TAGS = ['fiction', 'fantasy', 'romance', 'classic', 'mystery', 'kindle', 'sci-fi', 'literature',
-        'horror', 'contemporary', 'adventure', 'historical', 'adult', 'paranormal',
-        'thriller', 'history', 'dystopia', 'audio', 'children', 'school', 'philosophy', 'novel', 'young'
-        ]
-"""
 
 pd.options.mode.chained_assignment = None
 
@@ -38,32 +32,44 @@ def getPopularReco(user_mail, connection):
 
     favorite_tags = getFavoriteTags(user_mail, connection)
 
-    query = f"""
+    reco = []
+    for tag in favorite_tags:
+        query=f"""
         SELECT
-            book_id
+            BOOK.book_id
         FROM
-            BOOK B INNER JOIN TAGGED TG
-                ON B.book_id = TG.book_id
-            INNER JOIN TAG TA
-                ON TG.tag_id = TA.tag_id
+            BOOK inner join TAGGED CHECK_TAG
+                ON BOOK.book_id = CHECK_TAG.book_id
+            inner join TAGGED SELECTED_TAG
+                ON BOOK.book_id = SELECTED_TAG.book_id
+                AND CHECK_TAG.count >= SELECTED_TAG.count
+        WHERE
+            SELECTED_TAG.tag_id = {tag}
+        GROUP BY
+            BOOK.book_id
+        HAVING
+            MAX(CHECK_TAG.count) = MAX(SELECTED_TAG.count)
         ORDER BY
-            
-        LIMIT 5 
-    """
+            BOOK.ratings_count DESC
+        LIMIT 5;
+        """
 
-    if connection.is_connected():
-        df = pd.read_sql(query, connection)
+        if connection.is_connected():
+            df = pd.read_sql(query, connection)
+
+        reco += df['book_id'].tolist()
+
+    return reco
+
 
 # Return the number of reviews of a given user
-
-
 def getNumberReview(user_mail, connection):
     query = f"""
         SELECT
             COUNT(*) AS NB
         FROM
-            USER U INNER JOIN REVIEW R
-                ON U.user_id = R.user_id
+            USER U INNER JOIN INTERACTION I
+                ON U.user_id = I.user_id
         WHERE
             U.mail = '{user_mail}'
     """
@@ -355,5 +361,5 @@ if __name__ == '__main__':
     filtering.loadData()
     filtering.processData()
     print(filtering.filter())
-     '''
+    '''
     
