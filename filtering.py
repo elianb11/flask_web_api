@@ -163,11 +163,18 @@ class ContentBasedFiltering(Filtering):
         self.data = df
 
     def processData(self):
-        to_keep = ['author_id', 'publisher', 'publication_year', 'format']
+        to_keep = ['author_id', 'publisher', 'publication_year', 'format','num_pages']
         self.process = self.data[to_keep].copy()
 
+        # process number pages column
+        mean_nb_pages = self.process['num_pages'].mean()
+        self.process['num_pages'].fillna(mean_nb_pages, inplace=True)
+        self.process['num_pages'] = ((self.process['num_pages'] - self.process['num_pagesr'].min())
+                                            / (self.process['num_pages'].max()-self.process['num_pages'].min()))
+
         # process year column
-        self.process['publication_year'].fillna(0, inplace=True)
+        mean_pub = self.process['publication_year'][self.process['publication_year'] < 1960].mean()
+        self.process['publication_year'].fillna(mean_pub, inplace=True)
         self.process['publication_year'][self.process['publication_year'] < 1960] = 1960
         self.process['publication_year'] = ((self.process['publication_year'] - self.process['publication_year'].min())
                                             / (self.process['publication_year'].max()-self.process['publication_year'].min()))
