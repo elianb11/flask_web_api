@@ -31,7 +31,7 @@ def getReco(method='content', filter_base=None):
         MINIMUM_RECQUIRED = 5
         nb_review = getNumberReview(filter_base, connection)
 
-        if nb_review < MINIMUM_RECQUIRED:
+        if nb_review >= MINIMUM_RECQUIRED:
             filtering = CollabFiltering()
             filtering.setFilterBase(filter_base=filter_base)
             filtering.setConnection(connection)

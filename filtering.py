@@ -341,32 +341,31 @@ class CollabFiltering(Filtering):
         return [book_id for book_id, _ in reco]
 
 #TESTING
-'''
-if __name__ == '__main__':
-    connection = mysql.connector.connect(
-        host='ds50-mysql-do-user-9644544-0.b.db.ondigitalocean.com',
-        database='ds50',
-        user='ds50',
-        password='AVNS_4ybSd0CoPKnCL5F',
-        port='25060'
-    )
+
+# if __name__ == '__main__':
+#     connection = mysql.connector.connect(
+#         host='ds50-mysql-do-user-9644544-0.b.db.ondigitalocean.com',
+#         database='ds50',
+#         user='ds50',
+#         password='AVNS_4ybSd0CoPKnCL5F',
+#         port='25060'
+#     )
 
     # test mail : rjohnson@gmail.com
-    #print(getNumberReview('aadams18@hotmail.com', connection))
+    #print(getNumberReview('elian.belmonte@utbm.fr', connection))
     #print(getFavoriteTags('aadams18@hotmail.com', connection))
 
-    filtering = ContentBasedFiltering()
-    filtering.setFilterBase(filter_base=27421523)
-    filtering.setConnection(connection)
-    filtering.loadData()
-    filtering.processData()
-    print(filtering.filter())
+    # filtering = ContentBasedFiltering()
+    # filtering.setFilterBase(filter_base=27421523)
+    # filtering.setConnection(connection)
+    # filtering.loadData()
+    # filtering.processData()
+    # print(filtering.filter())
 
-    filtering = CollabFiltering()
-    filtering.setFilterBase(filter_base='aacevedo@gmail.com')
-    filtering.setConnection(connection)
-    filtering.loadData()
-    filtering.processData()
-    print(filtering.filter())
-    '''
+    # filtering = CollabFiltering()
+    # filtering.setFilterBase(filter_base='aacevedo@gmail.com')
+    # filtering.setConnection(connection)
+    # filtering.loadData()
+    # filtering.processData()
+    # print(filtering.filter())
     
