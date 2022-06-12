@@ -169,7 +169,7 @@ class ContentBasedFiltering(Filtering):
         # process number pages column
         mean_nb_pages = self.process['num_pages'].mean()
         self.process['num_pages'].fillna(mean_nb_pages, inplace=True)
-        self.process['num_pages'] = ((self.process['num_pages'] - self.process['num_pagesr'].min())
+        self.process['num_pages'] = ((self.process['num_pages'] - self.process['num_pages'].min())
                                             / (self.process['num_pages'].max()-self.process['num_pages'].min()))
 
         # process year column

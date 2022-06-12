@@ -189,11 +189,11 @@ def getStatsByBookId(book_id):
     stats = {}
     stats["total_rates"] = int(df["total"].sum())
     stats["avg_rating"] = round((df["total"][0]*1 + df["total"][1]*2 + df["total"][2]*3 + df["total"][3]*4 + df["total"][4]*5) / stats["total_rates"], 1)
-    stats["total_1"] = int(df["total"][0])
-    stats["total_2"] = int(df["total"][1])
-    stats["total_3"] = int(df["total"][2])
-    stats["total_4"] = int(df["total"][3])
-    stats["total_5"] = int(df["total"][4])
+    stats["percentage_1"] = round(df["total"][0] / df["total"].sum() * 100, 1)
+    stats["percentage_2"] = round(df["total"][1] / df["total"].sum() * 100, 1)
+    stats["percentage_3"] = round(df["total"][2] / df["total"].sum() * 100, 1)
+    stats["percentage_4"] = round(df["total"][3] / df["total"].sum() * 100, 1)
+    stats["percentage_5"] = round(df["total"][4] / df["total"].sum() * 100, 1)
     return stats
 
 def getDynamicNewUserID():
