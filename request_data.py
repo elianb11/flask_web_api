@@ -148,7 +148,7 @@ def getInteractionsByBookId(book_id):
         LIMIT 1000
         ;"""
         , connection)
-    df = fillDataframeNulls(df)
+    df["review_date"] = df["review_date"].astype(str)
     return df.to_dict('records')
 
 def getUserByMail(mail):
@@ -162,9 +162,8 @@ def getUserByMail(mail):
             mail = '"""+ mail +"""'
         ;"""
         , connection)
-    user = df.to_dict('records')[0]
-    user["sign_in_date"] = user["sign_in_date"].strftime("%d/%m/%Y")
-    return user
+    df["sign_in_date"] = df["sign_in_date"].astype(str)
+    return df.to_dict('records')[0]
 
 def getDynamicNewUserID():
     connection = getConnectionFromServer()
