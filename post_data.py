@@ -35,3 +35,21 @@ def postUser(user):
     connection.commit()
     return new_user_id
 
+def postInteraction(interaction):
+    connection = getConnectionFromServer()
+    mycursor = connection.cursor()
+    sql = """INSERT INTO
+            INTERACTION
+        VALUES (
+            """+ interaction['user_id'] +""",
+            """+ interaction['book_id'] +""",
+            TRUE,
+            """+ interaction['rating'] +""",
+            '"""+ interaction['review_text'] +"""',
+            CURDATE()
+        )
+        ;"""
+    mycursor.execute(sql)
+    connection.commit()
+    return interaction
+

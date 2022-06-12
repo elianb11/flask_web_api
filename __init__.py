@@ -7,6 +7,7 @@ flask.helpers._endpoint_from_view_func = flask.scaffold._endpoint_from_view_func
 
 # main.py
 from flask import Flask, request
+from werkzeug.exceptions import BadRequest
 from request_data import *
 from request_filter import *
 from post_data import *
@@ -67,6 +68,11 @@ class AllTags(Resource):
     def get(self):
         return getAllTags()
 
+@api.route('/apis/DS50/Interaction/First1000/book_id=<book_id>')
+class InteractionsByBookId(Resource):
+    def get(self, book_id):
+        return getInteractionsByBookId(book_id)
+
 @api.route('/apis/DS50/Filtering/<method>/<item>')
 class Filtering(Resource):
     def get(self, method, item):
@@ -96,6 +102,23 @@ class User(Resource):
     @ns_user.expect(user_data)
     def post(self):
         return postUser(request.get_json())
+
+@api.route('/apis/DS50/Interaction')
+class Interaction(Resource):
+    interaction_data = ns_user.model(
+    "interaction_data",
+    {
+        "user_id": fields.String(required=True),
+        "book_id": fields.String(required=True),
+        "rating": fields.String(required=True),
+        "review_text": fields.String(required=True),
+    },
+)
+    @ns_user.expect(interaction_data)
+    def post(self):
+        if int(request.get_json()['rating']) < 1 or int(request.get_json()['rating']) > 5 :
+            raise BadRequest('Rating value must be between 0 and 5.')
+        return postInteraction(request.get_json())
 
 if __name__ == "__main__":
     app.run()

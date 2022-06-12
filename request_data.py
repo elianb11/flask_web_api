@@ -136,6 +136,21 @@ def getAllTags():
     df = fillDataframeNulls(df)
     return df.to_dict('records')
 
+def getInteractionsByBookId(book_id):
+    connection = getConnectionFromServer()
+    df = pd.read_sql(
+        """SELECT
+            *
+        FROM
+            INTERACTION
+        WHERE
+            BOOK_ID = """+ str(book_id) +"""
+        LIMIT 1000
+        ;"""
+        , connection)
+    df = fillDataframeNulls(df)
+    return df.to_dict('records')
+
 def getUserByMail(mail):
     connection = getConnectionFromServer()
     df = pd.read_sql(
