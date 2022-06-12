@@ -140,9 +140,11 @@ def getInteractionsByBookId(book_id):
     connection = getConnectionFromServer()
     df = pd.read_sql(
         """SELECT
-            *
+            I.*
+            ,U.USERNAME
         FROM
-            INTERACTION
+            INTERACTION I INNER JOIN USER U
+                ON U.USER_ID = I.USER_ID
         WHERE
             BOOK_ID = """+ str(book_id) +"""
         LIMIT 1000
