@@ -68,7 +68,7 @@ class AllTags(Resource):
     def get(self):
         return getAllTags()
 
-@api.route('/apis/DS50/Interaction/First1000/book_id=<book_id>')
+@api.route('/apis/DS50/Interaction/First100/book_id=<book_id>')
 class InteractionsByBookId(Resource):
     def get(self, book_id):
         return getInteractionsByBookId(book_id)
@@ -113,7 +113,7 @@ class Interaction(Resource):
     interaction_data = ns_user.model(
     "interaction_data",
     {
-        "user_id": fields.String(required=True),
+        "mail": fields.String(required=True),
         "book_id": fields.String(required=True),
         "rating": fields.String(required=True),
         "review_text": fields.String(required=True),

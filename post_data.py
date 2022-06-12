@@ -37,15 +37,16 @@ def postUser(user):
 
 def postInteraction(interaction):
     connection = getConnectionFromServer()
+
     mycursor = connection.cursor()
-    sql = """INSERT INTO
+    sql = f"""INSERT INTO
             INTERACTION
         VALUES (
-            """+ interaction['user_id'] +""",
-            """+ interaction['book_id'] +""",
+            {getUserIdFromMail(interaction['mail'])},
+            {interaction['book_id']},
             TRUE,
-            """+ interaction['rating'] +""",
-            '"""+ interaction['review_text'] +"""',
+            {interaction['rating']},
+            '{interaction['review_text'].replace("'","''")}',
             CURDATE()
         )
         ;"""

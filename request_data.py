@@ -148,7 +148,11 @@ def getInteractionsByBookId(book_id):
                 ON U.USER_ID = I.USER_ID
         WHERE
             BOOK_ID = """+ str(book_id) +"""
-        LIMIT 1000
+        AND
+            I.REVIEW_TEXT IS NOT NULL
+        AND
+            I.REVIEW_TEXT <> ''
+        LIMIT 100
         ;"""
         , connection)
     df["review_date"] = df["review_date"].astype(str)
@@ -225,3 +229,17 @@ def getDynamicNewUserID():
         ;"""
         , connection)
     return str(df['user_id'][0] + 1)
+
+def getUserIdFromMail(mail):
+    connection = getConnectionFromServer()
+    df = pd.read_sql(
+        """SELECT
+            user_id
+        FROM
+            USER
+        WHERE
+            MAIL = '"""+ str(mail) +"""'
+        LIMIT 1
+        ;"""
+        , connection)
+    return str(df['user_id'][0])
