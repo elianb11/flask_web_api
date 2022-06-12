@@ -186,6 +186,22 @@ def getStatsByBookId(book_id):
                 1
             ;"""
         , connection)
+    if df[df["rate"] == 1].empty:
+        row = {"rate": 1, "total": 0}
+        df = df.append(row, ignore_index=True)
+    if df[df["rate"] == 2].empty:
+        row = {"rate": 2, "total": 0}
+        df = df.append(row, ignore_index=True)
+    if df[df["rate"] == 3].empty:
+        row = {"rate": 3, "total": 0}
+        df = df.append(row, ignore_index=True)
+    if df[df["rate"] == 4].empty:
+        row = {"rate": 4, "total": 0}
+        df = df.append(row, ignore_index=True)
+    if df[df["rate"] == 5].empty:
+        row = {"rate": 5, "total": 0}
+        df = df.append(row, ignore_index=True)
+    df = df.sort_values(by=['rate']).reset_index(drop=True)
     stats = {}
     stats["total_rates"] = int(df["total"].sum())
     stats["avg_rating"] = round((df["total"][0]*1 + df["total"][1]*2 + df["total"][2]*3 + df["total"][3]*4 + df["total"][4]*5) / stats["total_rates"], 1)
