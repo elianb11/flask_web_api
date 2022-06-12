@@ -167,6 +167,34 @@ def getUserByMail(mail):
     df["sign_in_date"] = df["sign_in_date"].astype(str)
     return df.to_dict('records')[0]
 
+def getStatsByBookId(book_id):
+    connection = getConnectionFromServer()
+    df = pd.read_sql(
+        """SELECT
+                RATING AS "rate"
+                , COUNT(RATING) AS "total"
+            FROM
+                INTERACTION
+            WHERE
+                BOOK_ID = """+ str(book_id) +"""
+            AND
+                RATING > 0
+            GROUP BY
+                RATING
+            ORDER BY
+                1
+            ;"""
+        , connection)
+    stats = {}
+    stats["total_rates"] = df["total"].sum()
+    stats["avg_rating"] = round((df["total"][0]*1 + df["total"][1]*2 + df["total"][2]*3 + df["total"][3]*4 + df["total"][4]*5) / stats["total_rates"], 1)
+    stats["total_1"] = df["total"][0]
+    stats["total_2"] = df["total"][1]
+    stats["total_3"] = df["total"][2]
+    stats["total_4"] = df["total"][3]
+    stats["total_5"] = df["total"][4]
+    return stats
+
 def getDynamicNewUserID():
     connection = getConnectionFromServer()
     df = pd.read_sql(

@@ -83,6 +83,11 @@ class User(Resource):
     def get(self, mail):
         return getUserByMail(mail)
 
+@api.route('/apis/DS50/Book/Stats/book_id=<book_id>')
+class BookStats(Resource): 
+    def get(self, book_id):
+        return getStatsByBookId(book_id)
+
 @api.route('/apis/DS50/User')
 class User(Resource):
     user_data = ns_user.model(
