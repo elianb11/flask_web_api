@@ -2,6 +2,7 @@ import mysql.connector
 from mysql.connector import Error
 import pandas as pd
 from datetime import datetime
+import json
 
 def getConnectionFromServer():
     return mysql.connector.connect(
@@ -186,13 +187,13 @@ def getStatsByBookId(book_id):
             ;"""
         , connection)
     stats = {}
-    stats["total_rates"] = df["total"].sum()
+    stats["total_rates"] = int(df["total"].sum())
     stats["avg_rating"] = round((df["total"][0]*1 + df["total"][1]*2 + df["total"][2]*3 + df["total"][3]*4 + df["total"][4]*5) / stats["total_rates"], 1)
-    stats["total_1"] = df["total"][0]
-    stats["total_2"] = df["total"][1]
-    stats["total_3"] = df["total"][2]
-    stats["total_4"] = df["total"][3]
-    stats["total_5"] = df["total"][4]
+    stats["total_1"] = int(df["total"][0])
+    stats["total_2"] = int(df["total"][1])
+    stats["total_3"] = int(df["total"][2])
+    stats["total_4"] = int(df["total"][3])
+    stats["total_5"] = int(df["total"][4])
     return stats
 
 def getDynamicNewUserID():
