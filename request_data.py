@@ -4,6 +4,7 @@ import pandas as pd
 from datetime import datetime
 import json
 
+# Retourne la connection avec la base de données
 def getConnectionFromServer():
     return mysql.connector.connect(
         host='ds50-mysql-do-user-9644544-0.b.db.ondigitalocean.com',
@@ -12,6 +13,7 @@ def getConnectionFromServer():
         password='AVNS_4ybSd0CoPKnCL5F',
         port = '25060')
 
+# Remplace les valeurs nulles du dataframe donné par des 0 (int) ou des '' (string)
 def fillDataframeNulls(df: pd.DataFrame):
     for col in df.columns:
         if df[col].dtype == object:
@@ -174,6 +176,7 @@ def getUserByMail(mail):
 
 def getStatsByBookId(book_id):
     connection = getConnectionFromServer()
+    # Récupération du nombre de notes pour chaque note existante (de 1 à 5)
     df = pd.read_sql(
         """SELECT
                 RATING AS "rate"
@@ -190,6 +193,7 @@ def getStatsByBookId(book_id):
                 1
             ;"""
         , connection)
+    # Comble le dataframe pour les ratings manquants (par exemple aucune note égale à 4 pour un livre)
     if df[df["rate"] == 1].empty:
         row = {"rate": 1, "total": 0}
         df = df.append(row, ignore_index=True)
@@ -206,6 +210,7 @@ def getStatsByBookId(book_id):
         row = {"rate": 5, "total": 0}
         df = df.append(row, ignore_index=True)
     df = df.sort_values(by=['rate']).reset_index(drop=True)
+    # Création des statistiques grâce aux valeurs récupérées
     stats = {}
     stats["total_rates"] = int(df["total"].sum())
     stats["avg_rating"] = round((df["total"][0]*1 + df["total"][1]*2 + df["total"][2]*3 + df["total"][3]*4 + df["total"][4]*5) / stats["total_rates"], 1)
@@ -216,6 +221,7 @@ def getStatsByBookId(book_id):
     stats["percentage_5"] = round(df["total"][4] / df["total"].sum() * 100, 1)
     return stats
 
+# Retourne un nouvel ID d'utilisateur égal au plus grand ID +1
 def getDynamicNewUserID():
     connection = getConnectionFromServer()
     df = pd.read_sql(
@@ -230,6 +236,7 @@ def getDynamicNewUserID():
         , connection)
     return str(df['user_id'][0] + 1)
 
+# Retourne l'ID d'un utilisateur pour un mail donné
 def getUserIdFromMail(mail):
     connection = getConnectionFromServer()
     df = pd.read_sql(

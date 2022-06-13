@@ -5,7 +5,7 @@ import mysql.connector
 from mysql.connector import Error
 import pandas as pd
 
-
+# Retourne la connection avec la base de données
 def getConnectionFromServer():
     return mysql.connector.connect(
         host='ds50-mysql-do-user-9644544-0.b.db.ondigitalocean.com',
